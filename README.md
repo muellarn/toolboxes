@@ -8,7 +8,7 @@ libraries are clearly better.
 |---|---|
 | `SETUP.md` | Step-by-step setup for an agent: install, precompile, verify |
 | `INSTRUCTIONS.md` | Rules to add to the agent's global instruction file |
-| `Cargo.toml`, `Cargo.lock` | Rust toolbox: about 70 precompiled crates |
+| `Cargo.toml`, `Cargo.lock` | Rust toolbox: about 75 precompiled crates |
 | `rs` | Wrapper that runs single-file Rust scripts against the toolbox |
 | `.cargo/config.toml` | mold linker for faster builds |
 | `python/requirements.txt` | Package list of the Python tool venv on Windows |

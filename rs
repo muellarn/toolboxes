@@ -16,10 +16,15 @@ usage() { sed -n '4,7p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 # Build scripts fingerprint environment variables (CC, CFLAGS, PKG_CONFIG_*, ...).
 # A fixed environment keeps login shells, plain shells and wsl.exe calls from
 # invalidating each other's precompiled crates. Cargo reads .cargo/config.toml
-# (mold linker) relative to the working directory.
+# (mold linker) relative to the working directory. Compiler messages name the
+# internal copy src/bin/<name>.rs; the optional second argument replaces that
+# path with the script path the caller used.
 build() {
+  local shown
+  shown=$(printf '%s' "${2:-src/bin/$1.rs}" | sed 's/[|&\\]/\\&/g')
   (cd "$TOOLS" && env -i HOME="$HOME" PATH="$HOME/.cargo/bin:/usr/local/bin:/usr/bin:/bin" \
-    cargo build -q --profile script --bin "$1")
+    cargo build -q --profile script --bin "$1" 2>&1 1>&3 \
+    | sed "s|src/bin/$1\.rs|$shown|g" >&2) 3>&1
 }
 
 [ $# -ge 1 ] || usage
@@ -36,7 +41,7 @@ case "$1" in
     name="e_$(printf '%s' "$2" | sha1sum | cut -c1-12)"
     shift 2 ;;
   *)
-    script=$1; shift
+    script=$1 shown=$1; shift
     if [[ $script =~ ^[A-Za-z]:[\\/] ]]; then script=$(wslpath -u "$script"); fi
     script=$(realpath "$script")
     stem=$(basename "$script" .rs)
@@ -53,7 +58,7 @@ if [ ! -f "$src" ] || [ "$(cat "$src")" != "$code" ]; then
 fi
 # Skip cargo's fingerprint check (~0.2 s) when the binary is newer than everything it depends on.
 if ! { [ "$bin" -nt "$src" ] && [ "$bin" -nt "$TOOLS/Cargo.lock" ] && [ "$bin" -nt "$TOOLS/Cargo.toml" ]; }; then
-  build "$name"
+  build "$name" "${shown:-}"
   touch "$bin"  # cargo leaves an up-to-date binary untouched
 fi
 exec "$bin" "$@"

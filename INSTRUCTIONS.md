@@ -65,28 +65,42 @@ values first:
   `/mnt/c/...` paths. `wsl.exe` refuses to start when the Windows working
   directory path is very long; `cd` to a short directory first.
 - Start time (measured): unchanged script 20–60 ms in WSL (about 0.2 s via
-  `wsl.exe`); new or edited script about 1 s, with polars about 1.5–2.5 s, with
-  image and reqwest up to about 4 s. Only the precompile after changing
-  `Cargo.toml` is slow (polars alone takes several minutes), so never interrupt
-  a running `rs` build or `rs --warmup`.
+  `wsl.exe`); new or edited script about 1 s, with polars about 1.5–2.5 s,
+  with image and reqwest up to about 4 s. The first build of a script that
+  combines plotters, geo and imageproc takes about 12 s; later edits of it
+  about 1 s. Concurrent `rs` builds wait for each other (one cargo lock), so
+  a parallel session can add waiting time. Only the precompile after changing
+  `Cargo.toml` is slow (polars alone takes several minutes), so never
+  interrupt a running `rs` build or `rs --warmup`.
 - A script is a plain `fn main()` file with `use` statements for toolbox crates;
   it needs no `[dependencies]` header. Prefer `anyhow::Result` and `?`.
+  Compiler messages point to the script's own path; warnings about unused
+  items are switched off.
+- Do not write a crate API from memory when unsure of it; APIs change between
+  versions (especially polars, image/imageproc, plotters, reqwest, calamine).
+  Look up the exact version in `~/.rust-tools/Cargo.lock`, then read the
+  examples, README and signatures in
+  `~/.cargo/registry/src/index.crates.io-*/<crate>-<version>/` before writing
+  the script.
 - Follow "File access across WSL and Windows" below: wrap every `File` in
   `BufWriter`/`BufReader` or use `fs::write`/`fs::read` once.
 - Usable directly (full list with versions in `~/.rust-tools/Cargo.toml`):
   - Errors/CLI/output: anyhow, clap (derive), indicatif, comfy-table,
     owo-colors, humantime, bytesize
   - Formats: serde (derive), serde_json, serde_yaml_ng, toml, json5, quick-xml
-    (serialize), csv, dotenvy
+    (serialize), roxmltree (easy XML reading), csv, dotenvy
   - Data/math: polars (lazy, csv, parquet, json, sql, strings, temporal),
-    ndarray, statrs, rand, itertools, petgraph, rayon
+    ndarray, statrs, rand, itertools, petgraph, rayon, geo (geometry and
+    distances), plotters (simple PNG/SVG charts)
   - Excel/PDF: calamine (read xlsx/xls/xlsb/ods), rust_xlsxwriter, lopdf,
     pdf-extract
   - Web/HTML/Markdown: reqwest (blocking, json), tokio (full), scraper, url,
     html2text, pulldown-cmark, minijinja
-  - Images: image, kamadak-exif, qrcode
-  - Text/dates: regex, fancy-regex, strsim, unicode-normalization, deunicode,
-    slug, encoding_rs, chardetng, textwrap, chrono (serde), chrono-tz
+  - Images: image, imageproc (draw shapes and text, filters), ab_glyph (fonts),
+    kamadak-exif, qrcode
+  - Text/dates: regex, fancy-regex, strsim, similar (diffs),
+    unicode-normalization, deunicode, slug, encoding_rs, chardetng, textwrap,
+    chrono (serde), chrono-tz
   - Files/system: walkdir, ignore, glob, tempfile, memmap2, notify, infer,
     sysinfo, zip, flate2, zstd, tar
   - Hashing/ids: sha2, md-5, blake3, hex, base64, uuid (v4)

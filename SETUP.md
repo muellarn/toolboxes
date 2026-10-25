@@ -3,7 +3,7 @@
 You are setting up two ad-hoc scripting toolboxes on a Windows machine with
 WSL2, so that you (and later sessions) can use them right away:
 
-- **Rust toolbox** in WSL: a Cargo project with about 70 precompiled crates and
+- **Rust toolbox** in WSL: a Cargo project with about 75 precompiled crates and
   the wrapper `rs`. This is the default for all scripting.
 - **Python tool venv** on Windows: for tasks where Python's libraries are
   clearly better (Office, OCR, plots, ML, LLM SDKs, Windows automation).
@@ -22,7 +22,7 @@ reinstalling (`git pull`, then step 4 and step 6).
 - In WSL, the build tools (ask the user to approve the `sudo` command):
 
       sudo apt-get update
-      sudo apt-get install -y build-essential clang mold cmake pkg-config git
+      sudo apt-get install -y build-essential clang mold cmake pkg-config git libfontconfig1-dev
 
 - Rust via rustup in WSL (skip if `cargo --version` works):
 
