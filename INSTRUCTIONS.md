@@ -111,7 +111,8 @@ placeholders with this machine's values first:
     (serialize), roxmltree (easy XML reading), csv, dotenvy
   - Data/math: polars (lazy, csv, parquet, json, sql, strings, temporal),
     ndarray, statrs, rand, itertools, petgraph, rayon, geo (geometry and
-    distances), plotters (simple PNG/SVG charts)
+    distances), contour (contour lines and isobands from grids), plotters
+    (simple PNG/SVG charts)
   - Excel/PDF: calamine (read xlsx/xls/xlsb/ods), rust_xlsxwriter, lopdf,
     pdf-extract
   - Web/HTML/Markdown: reqwest (blocking, json), tokio (full), scraper, url,

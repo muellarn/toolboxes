@@ -102,9 +102,19 @@ extend and back up, and the rules for file access across WSL and Windows).
 1. Fill in the placeholders listed at the top of `INSTRUCTIONS.md` with this
    machine's values.
 2. Append everything below its horizontal line to the agent's global
-   instruction file (Claude Code: `%USERPROFILE%\.claude\CLAUDE.md`; other
-   agents: their equivalent). If that file already contains sections with the
-   same headings, replace those sections and keep everything else.
+   (user-level, not per-repository) instruction file. If that file already
+   contains sections with the same headings, replace those sections and keep
+   everything else. Known locations:
+   - Claude Code: `%USERPROFILE%\.claude\CLAUDE.md`. If Claude Code is also
+     used inside WSL, update `~/.claude/CLAUDE.md` there too.
+   - GitHub Copilot in VS Code: a user-level instructions file such as
+     `toolboxes.instructions.md` with front matter `applyTo: "**"` in the
+     VS Code user profile's `prompts` folder (create it via the command
+     "Chat: New Instructions File", scope "User").
+   - GitHub Copilot CLI: `~/.copilot/copilot-instructions.md`.
+   - Other agents: their documented global instruction file (often
+     `AGENTS.md`). Check the agent's current documentation when unsure;
+     these locations change between versions.
 3. Show the user the inserted text.
 
 Instruction files are usually read only when a session starts, so new rules
