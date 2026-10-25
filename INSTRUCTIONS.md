@@ -38,16 +38,27 @@ values first:
 ### Choosing Rust or Python
 
 - Rust is the default for everything, including one-off scripts, quick
-  inspections and one-liners (`rs -e`), and for files on the Windows side
-  (read them through `/mnt/c/...` with buffered or whole-file I/O). It compiles
-  in 1–2.5 s, runs faster, and the compiler catches errors before a long run.
+  inspections and one-liners (`rs -e`), and for individual files on the
+  Windows side (read them through `/mnt/c/...` with buffered or whole-file
+  I/O). It compiles in 1–2.5 s, runs faster, and the compiler catches errors
+  before a long run.
 - Use Python only where its libraries are clearly better: Word and PowerPoint,
-  PDF creation or editing, OCR, plots, machine learning and statistics, LLM
-  SDKs, and Windows-specific work (COM, WMI, clipboard, GUI automation), which
-  Rust scripts cannot do because they run in WSL (Linux). Decide by library
-  quality for the task, not by habit or by how short the script is.
-- Polars and Parquet exist on both sides, so data can be handed between a Python
-  and a Rust step as Parquet or CSV files.
+  PDF of any kind (reading text, tables and form fields as well as creating
+  and editing), editing existing Excel files, mail files (`.msg`, `.eml`), OCR,
+  plots, machine learning and statistics, LLM SDKs, and Windows-specific work
+  (COM, WMI, clipboard, GUI automation), which Rust scripts cannot do because
+  they run in WSL (Linux). Reading Excel files or writing new ones stays with
+  Rust (calamine only reads, rust_xlsxwriter only creates new files). Decide
+  by library quality for the task, not by habit or by how short the script is.
+- Walk or search large directory trees on the Windows side (thousands of
+  files, for example the Desktop or a project with `node_modules`) with
+  Windows-native tools such as `rg`, Git Bash `grep`/`find` or the Python
+  venv, not with Rust in WSL: each file access across the boundary costs
+  about 0.5 ms (see "File access across WSL and Windows").
+- Use one language per task: when part of a small task needs Python, do the
+  whole task in Python instead of splitting it across two scripts. Split only
+  real data pipelines; Polars and Parquet exist on both sides, so data can be
+  handed between a Python and a Rust step as Parquet or CSV files.
 
 ### Rust toolbox (WSL)
 
