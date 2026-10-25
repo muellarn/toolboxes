@@ -57,6 +57,12 @@ placeholders with this machine's values first:
   commands stay as they are: `ls`, `cat`/`head` of a small file, `mkdir`,
   `cp`, `mv`, `rm`, `git`, a single `grep` or `find`, and the agent's
   dedicated search, read and edit tools. When unsure, write `rs -e`.
+  Several inspections chained with `;` or `&&` count as more than one simple
+  command.
+- Structured data (JSON, CSV, XML, TOML, YAML) is always read with a parser in
+  `rs` (serde_json, csv, roxmltree, toml, serde_yaml_ng), never with
+  `grep`/`sed`/`awk` or other regex matching, even for a quick look. Only
+  `head`/`wc` to peek at raw bytes or line counts are fine.
 - Use Python only where its libraries are clearly better: Word and PowerPoint,
   PDF of any kind (reading text, tables and form fields as well as creating
   and editing), editing existing Excel files, mail files (`.msg`, `.eml`), OCR,
