@@ -1,0 +1,4 @@
+/target/
+# Cached copies of scripts run with `rs` (not part of the toolbox)
+/src/bin/s_*.rs
+/src/bin/e_*.rs

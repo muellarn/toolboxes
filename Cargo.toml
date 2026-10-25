@@ -1,0 +1,106 @@
+# Precompiled Rust toolbox for single-file scripts (counterpart of the Python
+# tool venv %USERPROFILE%\.venv-tools on Windows). Every script run with `rs`
+# can use all crates below without compiling them again.
+#
+# Add a crate:  cd ~/.rust-tools && cargo add <crate> [--features ...]
+#               then move the new line into the matching section and run
+#               `rs --warmup` once so the next script starts fast.
+
+[package]
+name = "rust_tools"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+# --- Errors / CLI / output ---
+anyhow = "1.0.104"
+clap = { version = "4.6.7", features = ["derive"] }
+indicatif = "0.18.6"
+comfy-table = "8.0.1"
+owo-colors = "4.4.0"
+humantime = "2.4.0"
+bytesize = "2.7.0"
+
+# --- Serialization: JSON / YAML / TOML / XML / CSV / config ---
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+serde_yaml_ng = "0.10.0"
+toml = "1.1.8"
+json5 = "1.3.4"
+quick-xml = { version = "0.42.0", features = ["serialize"] }
+csv = "1.4.0"
+dotenvy = "0.15.7"
+
+# --- Data analysis / math ---
+polars = { version = "0.55.2", features = ["lazy", "csv", "parquet", "json", "sql", "strings", "temporal"] }
+ndarray = "0.17.2"
+statrs = "0.19.1"
+rand = "0.10.3"
+itertools = "0.15.0"
+petgraph = "0.8.3"
+rayon = "1.12.0"
+
+# --- Excel / PDF ---
+calamine = "0.37.0"
+rust_xlsxwriter = "0.101.0"
+lopdf = "0.46.0"
+pdf-extract = "0.12.1"
+
+# --- Web / HTTP / HTML / Markdown / templates ---
+reqwest = { version = "0.13.5", features = ["blocking", "json"] }
+tokio = { version = "1.54.1", features = ["full"] }
+scraper = "0.29.0"
+url = "2.5.8"
+html2text = "0.17.4"
+pulldown-cmark = "0.13.5"
+minijinja = "3.0.3"
+
+# --- Images ---
+image = "0.25.10"
+kamadak-exif = "0.6.1"
+qrcode = "0.14.1"
+
+# --- Text / encoding / dates ---
+regex = "1.13.1"
+fancy-regex = "0.20.0"
+strsim = "0.11.1"
+unicode-normalization = "0.1.26"
+deunicode = "1.6.2"
+slug = "0.1.6"
+encoding_rs = "0.8.42"
+chardetng = "1.0.0"
+textwrap = "0.16.4"
+chrono = { version = "0.4.45", features = ["serde"] }
+chrono-tz = "0.10.4"
+
+# --- Files / archives / system ---
+walkdir = "2.5.0"
+ignore = "0.4.33"
+glob = "0.3.4"
+tempfile = "3.27.0"
+memmap2 = "0.9.12"
+notify = "8.2.1"
+infer = "0.22.0"
+sysinfo = "0.39.6"
+zip = "9.1.0"
+flate2 = "1.1.10"
+zstd = "0.14.3"
+tar = "0.4.46"
+
+# --- Hashing / encoding / ids ---
+sha2 = "0.11.1"
+md-5 = "0.11.0"
+blake3 = "1.8.7"
+hex = "0.4.3"
+base64 = "0.23.1"
+uuid = { version = "1.29.0", features = ["v4"] }
+
+# --- Databases ---
+rusqlite = { version = "0.41.0", features = ["bundled"] }
+
+# Profile used by `rs`: dependencies fully optimized (built once), script code
+# optimized too, incremental so edits to a script rebuild quickly.
+[profile.script]
+inherits = "release"
+incremental = true
