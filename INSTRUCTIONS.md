@@ -49,6 +49,14 @@ placeholders with this machine's values first:
   Windows side (read them through `/mnt/c/...` with buffered or whole-file
   I/O). It compiles in 1–2.5 s, runs faster, and the compiler catches errors
   before a long run.
+- Rust also replaces Linux shell pipelines and loops (`grep | sed | awk`,
+  `sort | uniq -c`, `find -exec`, `xargs`, `for`/`while` loops, `jq`, `cut`,
+  `wc` chains) whenever the work is more than one simple command or may take
+  longer than about a second: many or large files, counting and aggregating,
+  transforming text or structured data, repeated operations. Simple single
+  commands stay as they are: `ls`, `cat`/`head` of a small file, `mkdir`,
+  `cp`, `mv`, `rm`, `git`, a single `grep` or `find`, and the agent's
+  dedicated search, read and edit tools. When unsure, write `rs -e`.
 - Use Python only where its libraries are clearly better: Word and PowerPoint,
   PDF of any kind (reading text, tables and form fields as well as creating
   and editing), editing existing Excel files, mail files (`.msg`, `.eml`), OCR,
