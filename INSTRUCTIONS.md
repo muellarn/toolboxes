@@ -2,8 +2,10 @@
 
 Copy everything below the line into the agent's global instruction file
 (for Claude Code: `%USERPROFILE%\.claude\CLAUDE.md`; other agents: their
-equivalent, such as `AGENTS.md`). Replace the placeholders with this machine's
-values first:
+equivalent, such as `AGENTS.md`). When the agent also runs inside WSL, copy it
+into the WSL-side file as well (for Claude Code: `~/.claude/CLAUDE.md` in WSL);
+otherwise sessions started there never see these rules. Replace the
+placeholders with this machine's values first:
 
 | Placeholder | Meaning | Example |
 |---|---|---|
@@ -15,14 +17,19 @@ values first:
 
 ---
 
-## Ad-hoc scripting: Rust and Python instead of PowerShell
+## Ad-hoc scripting: Rust first, Python only where its libraries are better
 
-- On Windows, do ad-hoc work (file and directory operations beyond the dedicated
-  tools, data processing, Excel/PDF/Office/JSON handling, HTTP requests, system
-  inspection) with one of the two preinstalled toolboxes below instead of
-  PowerShell cmdlets, pipelines, or scripts. Use PowerShell only when neither
-  fits. Invoking the toolboxes and native executables such as `git`, `gh`, or
-  `cargo` directly from the shell is not affected by this rule.
+- This applies on Windows and in WSL alike, whatever shell runs the command.
+  Do ad-hoc work (file and directory operations beyond the dedicated tools,
+  data processing, Excel/PDF/Office/JSON handling, HTTP requests, system
+  inspection) with one of the two preinstalled toolboxes below. They replace
+  PowerShell cmdlets, pipelines, or scripts as well as one-liners in other
+  interpreters, such as the system `python3` in WSL, `node -e`, or `perl`.
+  Use PowerShell only when neither toolbox fits. Invoking the toolboxes and
+  native executables such as `git`, `gh`, or `cargo` directly from the shell
+  is not affected by this rule.
+- "Python" in this section always means the tool venv below, never the system
+  `python3` in WSL or a project's own `.venv/`.
 - Write ad-hoc scripts to the temp directory (the session scratchpad when the
   harness provides one, otherwise `%TEMP%`), run them from there, and delete
   them as soon as they are no longer needed.
@@ -69,7 +76,9 @@ values first:
   incremental, mold linker) and runs it in the caller's working directory.
 - Run in WSL: `rs script.rs [args]`, or `rs -e 'code'` for a snippet that becomes
   the body of `fn main() -> anyhow::Result<()>` (`Context`, `Result`, `bail` are
-  imported). From Windows: `wsl.exe -e <WSL_HOME>/.local/bin/rs <script> [args]`;
+  imported). The wrapper appends `Ok(())` after the snippet itself, so do not
+  end the snippet with `Ok(())`; that fails with a type-inference error
+  (E0282). From Windows: `wsl.exe -e <WSL_HOME>/.local/bin/rs <script> [args]`;
   in Git Bash prefix `MSYS_NO_PATHCONV=1`, otherwise `/home/...` and `/mnt/...`
   arguments are rewritten to Windows paths. A Windows script path (`C:\...`) is
   converted, other arguments are passed unchanged, so give the script
