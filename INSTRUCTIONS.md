@@ -35,7 +35,7 @@ placeholders with this machine's values first:
   them as soon as they are no longer needed.
 - Both toolboxes are for tooling only. Real projects keep their own `.venv/` or
   `Cargo.toml`; never add project dependencies to a toolbox.
-- Both are backed up in the private repo `<REPO>` (checked out as
+- Both are backed up in the repo `<REPO>` (checked out as
   `~/.rust-tools`; the Python list is copied to `python/requirements.txt`).
   After changing either toolbox, run `~/.rust-tools/backup.sh "<conventional
   commit title>"` in WSL. It commits directly to `main`; this backup-only repo

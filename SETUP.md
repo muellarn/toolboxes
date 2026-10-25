@@ -28,14 +28,19 @@ reinstalling (`git pull`, then step 4 and step 6).
 
       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
-- GitHub access in WSL for the private repository, for example with
-  `gh auth login` (GitHub CLI) or an existing credential helper.
+- Only for backups with `backup.sh`: a GitHub repository the user can push to
+  (their own fork or copy of this one) and GitHub access in WSL, for example
+  with `gh auth login` (GitHub CLI).
 - On Windows, Python 3 with the `py` launcher (`py --version`). Use the newest
   Python version for which all packages in `python/requirements.txt` install.
 
 ## 2. Clone the repository in WSL
 
-    gh repo clone <REPO> ~/.rust-tools
+    git clone https://github.com/<REPO>.git ~/.rust-tools
+
+`<REPO>` is the user's own fork or copy if they want backups, otherwise the
+public original. For backups, also let git use the GitHub CLI credentials:
+
     git -C ~/.rust-tools config credential.helper '!gh auth git-credential'
 
 The toolbox must live on the WSL filesystem (`~`), not under `/mnt/c`, or
