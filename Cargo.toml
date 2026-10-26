@@ -42,6 +42,8 @@ dotenvy = "0.15.7"
 polars = { version = "0.55.2", features = ["lazy", "csv", "parquet", "json", "sql", "strings", "temporal"] }
 ndarray = "0.17.2"
 statrs = "0.19.1"
+num-bigint = "0.5.1"
+num-traits = "0.2.19"
 rand = "0.10.3"
 itertools = "0.15.0"
 petgraph = "0.8.3"
