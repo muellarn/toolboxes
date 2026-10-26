@@ -46,11 +46,14 @@ public original. For backups, also let git use the GitHub CLI credentials:
 The toolbox must live on the WSL filesystem (`~`), not under `/mnt/c`, or
 builds become very slow.
 
-## 3. Put `rs` on the PATH
+## 3. Put `rs` and `tb` on the PATH
 
     mkdir -p ~/.local/bin
     ln -sfn ~/.rust-tools/rs ~/.local/bin/rs
+    ln -sfn ~/.rust-tools/target/script/tb ~/.local/bin/tb
     chmod +x ~/.rust-tools/rs ~/.rust-tools/backup.sh
+
+The `tb` link points to the binary that step 4 builds.
 
 Ubuntu adds `~/.local/bin` to the PATH of login shells once the directory
 exists. Calls from Windows use the absolute path, so they do not depend on it.
@@ -69,6 +72,11 @@ artifacts that have to be rebuilt.
 In WSL, run this twice; the second run must take well under 0.1 s:
 
     time ~/.local/bin/rs -e 'println!("{}", serde_json::json!({"ok": true}))'
+
+Then check the precompiled tool and library:
+
+    echo '{"ok": true}' | ~/.local/bin/tb json -p /ok
+    ~/.local/bin/rs -e 'println!("{}", tb::img::encode(&image::DynamicImage::new_rgb8(2, 2), image::ImageFormat::Png)?.len())'
 
 From Windows (Git Bash; PowerShell needs no `MSYS_NO_PATHCONV`):
 

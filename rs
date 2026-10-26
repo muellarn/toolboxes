@@ -3,7 +3,7 @@
 #
 #   rs script.rs [args...]   run a script (Windows paths such as C:\x\y.rs work too)
 #   rs -e 'code' [args...]   run code as the body of `fn main() -> anyhow::Result<()>`
-#   rs --warmup              compile all toolbox crates (after `cargo add`)
+#   rs --warmup              compile all toolbox crates, the tb library and tb tool
 #   rs --clean               delete cached script copies and their binaries
 set -euo pipefail
 
@@ -29,7 +29,7 @@ build() {
 
 [ $# -ge 1 ] || usage
 case "$1" in
-  --warmup) build _warmup; exit ;;
+  --warmup) build _warmup; build tb; exit ;;
   --clean)
     rm -rf "$BIN_DIR"/[se]_*.rs "$OUT_DIR"/[se]_* "$OUT_DIR"/deps/[se]_* \
       "$OUT_DIR"/.fingerprint/[se]_* "$OUT_DIR"/incremental/[se]_*
@@ -57,7 +57,7 @@ if [ ! -f "$src" ] || [ "$(cat "$src")" != "$code" ]; then
   printf '%s\n' "$code" > "$src.tmp" && mv "$src.tmp" "$src"
 fi
 # Skip cargo's fingerprint check (~0.2 s) when the binary is newer than everything it depends on.
-if ! { [ "$bin" -nt "$src" ] && [ "$bin" -nt "$TOOLS/Cargo.lock" ] && [ "$bin" -nt "$TOOLS/Cargo.toml" ]; }; then
+if ! { [ "$bin" -nt "$src" ] && [ "$bin" -nt "$TOOLS/Cargo.lock" ] && [ "$bin" -nt "$TOOLS/Cargo.toml" ] && [ "$bin" -nt "$TOOLS/src/lib.rs" ]; }; then
   build "$name" "${shown:-}"
   touch "$bin"  # cargo leaves an up-to-date binary untouched
 fi

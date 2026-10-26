@@ -10,6 +10,8 @@ libraries are clearly better.
 | `INSTRUCTIONS.md` | Rules to add to the agent's global instruction file |
 | `Cargo.toml`, `Cargo.lock` | Rust toolbox: about 75 precompiled crates |
 | `rs` | Wrapper that runs single-file Rust scripts against the toolbox |
+| `src/lib.rs` | Library `tb`: precompiled wrappers for slow-to-compile calls (`tb::img`) |
+| `src/bin/tb.rs` | Precompiled `tb` tool: JSON/YAML/TOML/CSV/Excel inspection and conversion, counting, directory sizes |
 | `.cargo/config.toml` | mold linker for faster builds |
 | `python/requirements.txt` | Package list of the Python tool venv on Windows |
 | `backup.sh` | Copies the Python list here, commits and pushes |

@@ -12,6 +12,11 @@ version = "0.1.0"
 edition = "2024"
 publish = false
 
+# Precompiled wrappers in src/lib.rs, used in scripts as `tb::img::open(..)`. The binary
+# src/bin/tb.rs is the separate `tb` command line tool.
+[lib]
+name = "tb"
+
 [dependencies]
 # --- Errors / CLI / output ---
 anyhow = "1.0.104"

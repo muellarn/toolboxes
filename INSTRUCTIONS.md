@@ -59,8 +59,16 @@ placeholders with this machine's values first:
   dedicated search, read and edit tools. When unsure, write `rs -e`.
   Several inspections chained with `;` or `&&` count as more than one simple
   command.
+- For the common cases use the precompiled `tb` first; it starts instantly
+  because nothing is compiled: `tb json` (pretty-print, `-p /json/pointer`,
+  `-k` keys or length; also JSON5, YAML, TOML), `tb conv FILE --to
+  json|yaml|toml|csv`, `tb csv FILE` (columns, types, empty cells,
+  min/max/mean, `-n` first rows), `tb xlsx FILE` (sheet as CSV, `-l` lists
+  sheets), `tb count` (replaces `sort | uniq -c | sort -rn`, `-r` counts the
+  first regex group) and `tb size DIR` (size and file count per entry).
+  `tb <command> --help` shows all options. Searching text stays with `rg`.
 - Structured data (JSON, CSV, XML, TOML, YAML) is always read with a parser in
-  `rs` (serde_json, csv, roxmltree, toml, serde_yaml_ng), never with
+  `tb` or `rs` (serde_json, csv, roxmltree, toml, serde_yaml_ng), never with
   `grep`/`sed`/`awk` or other regex matching, even for a quick look. Only
   `head`/`wc` to peek at raw bytes or line counts are fine.
 - Use Python only where its libraries are clearly better: Word and PowerPoint,
@@ -97,19 +105,26 @@ placeholders with this machine's values first:
   arguments are rewritten to Windows paths. A Windows script path (`C:\...`) is
   converted, other arguments are passed unchanged, so give the script
   `/mnt/c/...` paths. `wsl.exe` refuses to start when the Windows working
-  directory path is very long; `cd` to a short directory first.
+  directory path is very long; `cd` to a short directory first. `tb` is called
+  the same way: `wsl.exe -e <WSL_HOME>/.local/bin/tb <command> [args]`.
 - Start time (measured): unchanged script 20–60 ms in WSL (about 0.2 s via
-  `wsl.exe`); new or edited script about 1 s, with polars about 1.5–2.5 s,
-  with image and reqwest up to about 4 s. The first build of a script that
-  combines plotters, geo and imageproc takes about 12 s; later edits of it
-  about 1 s. Concurrent `rs` builds wait for each other (one cargo lock), so
-  a parallel session can add waiting time. Only the precompile after changing
+  `wsl.exe`); new or edited script about 1 s, with polars, calamine,
+  rust_xlsxwriter or zip about 2.5–3.5 s. Image scripts take about 1 s when
+  they load and save through `tb::img` (below), but about 14 s with
+  `image::open` or `.save()`. Concurrent `rs` builds wait for each other (one
+  cargo lock), so a parallel session can add waiting time. Only the precompile after changing
   `Cargo.toml` is slow (polars alone takes several minutes), so never
   interrupt a running `rs` build or `rs --warmup`.
 - A script is a plain `fn main()` file with `use` statements for toolbox crates;
   it needs no `[dependencies]` header. Prefer `anyhow::Result` and `?`.
   Compiler messages point to the script's own path; warnings about unused
   items are switched off.
+- Load and save images with the precompiled wrappers in the toolbox library
+  `tb` (`~/.rust-tools/src/lib.rs`): `tb::img::open(path)`, `tb::img::load(&bytes)`,
+  `tb::img::save(&dynamic_image, path)`, `tb::img::save_as(.., ImageFormat)`,
+  `tb::img::encode(&img, ImageFormat) -> Vec<u8>`, and `tb::img::save_rgb`,
+  `save_rgba`, `save_gray` for `RgbImage`/`RgbaImage`/`GrayImage`. Everything
+  else (resize, crop, pixels, imageproc) uses `image`/`imageproc` directly.
 - Do not write a crate API from memory when unsure of it; APIs change between
   versions (especially polars, image/imageproc, plotters, reqwest, calamine).
   Look up the exact version in `~/.rust-tools/Cargo.lock`, then read the
@@ -143,7 +158,10 @@ placeholders with this machine's values first:
 - Extend: `cd ~/.rust-tools && cargo add <crate> [--features ...]`, move the new
   line into the matching section of `Cargo.toml`, then run `rs --warmup` once.
   Prefer pure-Rust crates with minimal features; changing `Cargo.toml` makes each
-  script rebuild once on its next run.
+  script rebuild once on its next run. Add a wrapper to `src/lib.rs` only for a
+  call whose first build was measured above about 3 s (generic code that each
+  script would compile again); changing `src/lib.rs` relinks every script once.
+  Changes to `src/bin/tb.rs` take effect after `rs --warmup`.
 - `rs --clean` deletes cached script copies and binaries when `target/` grows.
 
 ### Python tool venv (Windows)
