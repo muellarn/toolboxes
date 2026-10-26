@@ -2,10 +2,8 @@
 
 Copy everything below the line into the agent's global instruction file
 (for Claude Code: `%USERPROFILE%\.claude\CLAUDE.md`; other agents: their
-equivalent, such as `AGENTS.md`). When the agent also runs inside WSL, copy it
-into the WSL-side file as well (for Claude Code: `~/.claude/CLAUDE.md` in WSL);
-otherwise sessions started there never see these rules. Replace the
-placeholders with this machine's values first:
+equivalent, such as `AGENTS.md`). Replace the placeholders with this
+machine's values first:
 
 | Placeholder | Meaning | Example |
 |---|---|---|

@@ -118,8 +118,7 @@ extend and back up, and the rules for file access across WSL and Windows).
    (user-level, not per-repository) instruction file. If that file already
    contains sections with the same headings, replace those sections and keep
    everything else. Known locations:
-   - Claude Code: `%USERPROFILE%\.claude\CLAUDE.md`. If Claude Code is also
-     used inside WSL, update `~/.claude/CLAUDE.md` there too.
+   - Claude Code: `%USERPROFILE%\.claude\CLAUDE.md`.
    - GitHub Copilot in VS Code: a user-level instructions file such as
      `toolboxes.instructions.md` with front matter `applyTo: "**"` in the
      VS Code user profile's `prompts` folder (create it via the command
