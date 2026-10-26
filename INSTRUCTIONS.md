@@ -57,8 +57,10 @@ placeholders with this machine's values first:
   commands stay as they are: `ls`, `cat`/`head` of a small file, `mkdir`,
   `cp`, `mv`, `rm`, `git`, a single `grep` or `find`, and the agent's
   dedicated search, read and edit tools. When unsure, write `rs -e`.
-  Several inspections chained with `;` or `&&` count as more than one simple
-  command.
+  Several independent read-only checks, each a single simple command (for
+  example `ls`, `df`, one `find` or `du`), may share one call. As soon as a
+  loop, a pipe that sorts, counts or filters, or any evaluation of the output
+  comes in, use `tb` or `rs` for that part.
 - For the common cases use the precompiled `tb` first; it starts instantly
   because nothing is compiled: `tb json` (pretty-print, `-p /json/pointer`,
   `-k` keys or length; also JSON5, YAML, TOML), `tb conv FILE --to
