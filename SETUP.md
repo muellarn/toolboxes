@@ -110,7 +110,9 @@ Verify:
 
 `INSTRUCTIONS.md` contains the rules that make an agent use these toolboxes
 (Rust as default, when to use Python, how to call `rs` from Windows, how to
-extend and back up, and the rules for file access across WSL and Windows).
+extend and back up). The shared rules in `rules/` (running commands, file
+access across WSL and Windows) are loaded from the checkout instead of being
+copied; the section "Shared rules" in `INSTRUCTIONS.md` says how per agent.
 
 1. Fill in the placeholders listed at the top of `INSTRUCTIONS.md` with this
    machine's values.
@@ -127,7 +129,9 @@ extend and back up, and the rules for file access across WSL and Windows).
    - Other agents: their documented global instruction file (often
      `AGENTS.md`). Check the agent's current documentation when unsure;
      these locations change between versions.
-3. Show the user the inserted text.
+3. Add the imports or `instructions` entries for the files in `rules/` as
+   described in "Shared rules".
+4. Show the user the inserted text.
 
 Instruction files are usually read only when a session starts, so new rules
 take effect in the next session.

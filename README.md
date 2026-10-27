@@ -8,6 +8,7 @@ libraries are clearly better.
 |---|---|
 | `SETUP.md` | Step-by-step setup for an agent: install, precompile, verify |
 | `INSTRUCTIONS.md` | Rules to add to the agent's global instruction file |
+| `rules/` | Rules shared by all agents, loaded from the checkout instead of copied |
 | `Cargo.toml`, `Cargo.lock` | Rust toolbox: about 75 precompiled crates |
 | `rs` | Wrapper that runs single-file Rust scripts against the toolbox |
 | `src/lib.rs` | Library `tb`: precompiled wrappers for slow-to-compile calls (`tb::img`) |

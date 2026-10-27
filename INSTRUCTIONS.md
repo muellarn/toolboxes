@@ -38,7 +38,8 @@ machine's values first:
   After changing either toolbox, run `~/.rust-tools/backup.sh "<conventional
   commit title>"` in WSL. It commits directly to `main`; this backup-only repo
   needs no issue or pull request. When these instructions change, update
-  `INSTRUCTIONS.md` in the repo as well.
+  `INSTRUCTIONS.md` in the repo as well; shared rules change only in
+  `rules/` (see "Shared rules" at the end).
 
 ### Choosing Rust or Python
 
@@ -131,7 +132,7 @@ machine's values first:
   examples, README and signatures in
   `~/.cargo/registry/src/index.crates.io-*/<crate>-<version>/` before writing
   the script.
-- Follow "File access across WSL and Windows" below: wrap every `File` in
+- Follow "File access across WSL and Windows" (`rules/`): wrap every `File` in
   `BufWriter`/`BufReader` or use `fs::write`/`fs::read` once.
 - Usable directly (full list with versions in `~/.rust-tools/Cargo.toml`):
   - Errors/CLI/output: anyhow, clap (derive), indicatif, comfy-table,
@@ -195,54 +196,20 @@ machine's values first:
 - Extend: `python.exe -m pip install <package>`, then add it to the matching
   section of `requirements.txt`.
 
-## Running commands: estimate, background, report status
+## Shared rules
 
-This applies to every command and script, in any language, foreground or
-background.
+The files in `~/.rust-tools/rules/` belong to these instructions and are the
+only copy of them: `running-commands.md` (estimate runtimes, run long commands
+in the background, show progress) and `wsl-windows-files.md` (file access
+across WSL and Windows). Load them instead of copying them, so a change there
+reaches every agent:
 
-- **Estimate before starting.** Say in one line how long the command should
-  take and what drives that (number of requests, files, rows, build time). If
-  the estimate is more than roughly 30 seconds, run it in the background.
-  Long-running work goes to the background by default, not on request.
-- **Always produce visible progress.** Never start a command that can run for
-  more than a few seconds without feedback. Print a counter, a percentage or a
-  heartbeat every few seconds to stderr, and log to a file. A silent loop is a
-  bug: it makes the run indistinguishable from a hang.
-- **Check the estimate against reality.** While a background command runs,
-  compare elapsed time with the estimate at reasonable intervals. If the run
-  is clearly slower than estimated, look at the progress output and decide
-  whether continuing still makes sense — slow down, reduce the workload,
-  parallelize, or abort and change the approach. Do not let a run drift
-  silently past its estimate.
-- **Report the estimate drift to the owner** when a run takes substantially
-  longer than announced, together with what is being done about it.
-- **Keep queues short.** Prefer several small parallel runs over one long
-  serial one where the tool allows it, and avoid starting a second long job
-  while a slow one is still running unless they are independent.
-- **After the run, state the actual duration** next to the estimate, so the
-  next estimate is better.
-
-## File access across WSL and Windows
-
-This applies to every program, script, build and tool, in any language.
-
-- Every file syscall that crosses between WSL and Windows costs about 0.5 ms:
-  WSL programs on `/mnt/c/...`, and Windows programs on
-  `\\wsl.localhost\...`. Many small reads or writes therefore become very slow;
-  an unbuffered JPEG encoder made 135,731 writes to `/mnt/c` and took 75 s
-  instead of 0.45 s.
-- Always buffer file I/O there, or read and write whole files in one call:
-  `BufWriter`/`BufReader` or `fs::write`/`fs::read` in Rust; in C/C++ avoid
-  `write()` per item; in Python keep the default buffering (never
-  `buffering=0`) and prefer `read_bytes`/`write_bytes`. Pass buffered writers to
-  encoders and serializers instead of raw files.
-- Keep many small working files (caches, downloaded tiles, intermediate
-  outputs, build directories) on the side of the program that uses them: WSL
-  programs under the WSL filesystem (for example `/tmp` or `~`), Windows
-  programs under `C:\`. Cross over only for inputs and final results.
-- Build and run projects on the filesystem of the toolchain that builds them
-  (`cargo`, `git`, `npm` in WSL on WSL paths). For a project that lives under
-  `C:\`, prefer the Windows toolchain or expect slow builds.
-- If a run is unexpectedly slow, check the syscall count first
-  (`strace -c -f <cmd>` in WSL) before suspecting the network or the
-  compiler.
+- Claude Code: import them at the end of the global `CLAUDE.md`, one per line,
+  as `@\\wsl$\<distro>\home\<user>\.rust-tools\rules\running-commands.md`
+  (the `\\wsl$` form; Claude Code does not follow other network paths).
+- OpenCode: list them in the `instructions` array of the global
+  `opencode.json`, for example
+  `"\\\\wsl.localhost\\<distro>\\home\\<user>\\.rust-tools\\rules\\running-commands.md"`
+  on Windows or `"/home/<user>/.rust-tools/rules/running-commands.md"` in
+  Linux.
+- Other agents: copy the files' contents into their instruction file.
