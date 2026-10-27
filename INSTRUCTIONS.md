@@ -195,6 +195,33 @@ machine's values first:
 - Extend: `python.exe -m pip install <package>`, then add it to the matching
   section of `requirements.txt`.
 
+## Running commands: estimate, background, report status
+
+This applies to every command and script, in any language, foreground or
+background.
+
+- **Estimate before starting.** Say in one line how long the command should
+  take and what drives that (number of requests, files, rows, build time). If
+  the estimate is more than roughly 30 seconds, run it in the background.
+  Long-running work goes to the background by default, not on request.
+- **Always produce visible progress.** Never start a command that can run for
+  more than a few seconds without feedback. Print a counter, a percentage or a
+  heartbeat every few seconds to stderr, and log to a file. A silent loop is a
+  bug: it makes the run indistinguishable from a hang.
+- **Check the estimate against reality.** While a background command runs,
+  compare elapsed time with the estimate at reasonable intervals. If the run
+  is clearly slower than estimated, look at the progress output and decide
+  whether continuing still makes sense — slow down, reduce the workload,
+  parallelize, or abort and change the approach. Do not let a run drift
+  silently past its estimate.
+- **Report the estimate drift to the owner** when a run takes substantially
+  longer than announced, together with what is being done about it.
+- **Keep queues short.** Prefer several small parallel runs over one long
+  serial one where the tool allows it, and avoid starting a second long job
+  while a slow one is still running unless they are independent.
+- **After the run, state the actual duration** next to the estimate, so the
+  next estimate is better.
+
 ## File access across WSL and Windows
 
 This applies to every program, script, build and tool, in any language.
