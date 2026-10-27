@@ -1,3 +1,23 @@
+## Efficient scripts
+
+- **Stream, do not load everything.** Read line-delimited data (JSONL, CSV) with
+  a reader per record instead of `read_to_string` plus a full parse. Only load a
+  whole file when it is small or genuinely needs random access.
+- **Build one compact intermediate and reuse it.** Do not re-parse the same
+  large file in every analysis script. Convert once into a narrow format
+  (Parquet, or CSV with only the needed columns) and read that afterwards.
+- **Keep only the columns and fields the next step needs.** A 150 MB JSON that
+  carries fields nobody reads is 150 MB of I/O and parsing per run.
+- **Do not re-fetch what is already on disk.** Check for the file first and skip
+  the request; make harvests resumable by appending and deduplicating.
+- **Parallelize network work against the real rate limit.** Match the pool size
+  to the documented limit (SEC allows 10 requests per second) and add retries
+  with backoff instead of aborting the whole run on one failure.
+- **Write results incrementally and flush per batch**, so a crash costs one batch
+  rather than the run.
+- **Measure before optimizing.** If a run is slow, find out whether it is I/O,
+  parsing, network or CPU before changing anything.
+
 ## Running commands: estimate, background, report status
 
 This applies to every command and script, in any language, foreground or
