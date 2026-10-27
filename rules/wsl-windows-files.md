@@ -16,6 +16,18 @@ This applies to every program, script, build and tool, in any language.
   outputs, build directories) on the side of the program that uses them: WSL
   programs under the WSL filesystem (for example `/tmp` or `~`), Windows
   programs under `C:\`. Cross over only for inputs and final results.
+- **Default working directory for WSL scripts is `/tmp`, not `/mnt/c`.**
+  Write inputs, caches, intermediate files and logs under `/tmp` (or `~`), and
+  copy only the final result to the Windows side. Do not run a WSL script whose
+  data lives on `/mnt/c` just because it is convenient.
+- **`/tmp` is wiped by a WSL restart, so protect the result.** Write the final
+  output to `/tmp` first and copy it to `/mnt/c` as soon as it exists, or write
+  it directly to `/mnt/c` in one call. Never leave the only copy of hours of
+  work in `/tmp`. Long harvests append to a file and flush per batch, so a
+  crash costs one batch, not the run.
+- **Avoid large JSON as an interchange format.** A 150 MB JSON costs seconds of
+  I/O plus seconds of parsing on every read. Prefer Parquet, CSV or a compact
+  binary layout for anything above a few megabytes.
 - Build and run projects on the filesystem of the toolchain that builds them
   (`cargo`, `git`, `npm` in WSL on WSL paths). For a project that lives under
   `C:\`, prefer the Windows toolchain or expect slow builds.
