@@ -23,17 +23,23 @@
 This applies to every command and script, in any language, foreground or
 background.
 
-- **Estimate before starting.** Say in one line how long the command should
-  take and what drives that (number of requests, files, rows, build time).
+- **Every command gets a timeout of 5 seconds.** A command that should take
+  longer is announced first: one sentence on how long it should take and what
+  drives that (number of requests, files, rows, build time). It then gets a
+  matching timeout: close to the estimate, not padded far beyond it, or run in
+  the background so that the wait can be extended when the estimate was wrong.
+- **Anything that runs longer than 5 seconds logs what it does.** No command
+  may run that long without feedback on what is happening. If the command
+  cannot report its progress inline, run it through a script (Rust, Python, sh
+  or PowerShell) that does.
 - **Long runs go to the background by default.** If the estimate is more than
   roughly 30 seconds, start the command in the background without being asked:
   with the harness's background mode if it has one, otherwise detached with
   its output in a log file (`nohup cmd > run.log 2>&1 &`), and read the log
   instead of waiting on the command.
-- **Always produce visible progress.** Never start a command that can run for
-  more than a few seconds without feedback. Scripts print a counter, a
-  percentage or a heartbeat every few seconds to stderr; tools get their
-  progress or verbose flag. A silent run cannot be told apart from a hang.
+- **Always produce visible progress.** Scripts print a counter, a percentage or
+  a heartbeat every few seconds to stderr; tools get their progress or verbose
+  flag. A silent run cannot be told apart from a hang.
 - **Tell the owner the status.** While a command runs, report what it is doing
   and how far it is, not only the final result.
 - **Check the estimate against reality.** At reasonable intervals compare the
