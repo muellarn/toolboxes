@@ -69,6 +69,7 @@ python-dotenv
 # --- Web / HTTP / HTML / Markdown ---
 requests
 httpx
+curl_cffi<0.17
 aiohttp
 websockets
 beautifulsoup4

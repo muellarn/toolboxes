@@ -59,7 +59,7 @@ lopdf = "0.46.0"
 pdf-extract = "0.12.1"
 
 # --- Web / HTTP / HTML / Markdown / templates ---
-reqwest = { version = "0.13.5", features = ["blocking", "json"] }
+reqwest = { version = "0.13.5", features = ["blocking", "json", "gzip", "cookies"] }
 tokio = { version = "1.54.1", features = ["full"] }
 tokio-tungstenite = "0.30.0"
 futures-util = "0.3.34"
