@@ -77,6 +77,9 @@ machine's values first:
   automation), which Rust cannot do because it runs in WSL. Reading Excel files
   and writing new ones stays with Rust (calamine reads, rust_xlsxwriter only
   creates new files). Decide by library quality, not by habit or script length.
+- A missing crate is no reason for Python. If `~/.rust-tools/Cargo.toml` lacks
+  the crate you need, add it (see "Extend" below), continue in Rust, back up the
+  change as described above, and mention the addition in your report.
 - Walk or search large directory trees on the Windows side (thousands of files)
   with Windows-native tools (`rg`, Git Bash `grep`/`find`, or the Python venv),
   not with Rust in WSL, because every file access across the boundary is slow.
