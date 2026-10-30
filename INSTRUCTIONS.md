@@ -205,8 +205,10 @@ across WSL and Windows). Load them instead of copying them, so a change there
 reaches every agent:
 
 - Claude Code: import them at the end of the global `CLAUDE.md`, one per line,
-  as `@\\wsl$\<distro>\home\<user>\.rust-tools\rules\running-commands.md`
-  (the `\\wsl$` form; Claude Code does not follow other network paths).
+  as `@//wsl.localhost/<distro>/home/<user>/.rust-tools/rules/running-commands.md`
+  (forward slashes only: Claude Code silently ignores an `@` path containing
+  a backslash, and of all network paths it follows only `//wsl.localhost/`
+  and `//wsl$/`).
 - OpenCode: list them in the `instructions` array of the global
   `opencode.json`, for example
   `"\\\\wsl.localhost\\<distro>\\home\\<user>\\.rust-tools\\rules\\running-commands.md"`
