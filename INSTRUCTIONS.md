@@ -17,123 +17,110 @@ machine's values first:
 
 ## Ad-hoc scripting: Rust first, Python only where its libraries are better
 
-- This applies on Windows and in WSL alike, whatever shell runs the command.
-  Do ad-hoc work (file and directory operations beyond the dedicated tools,
-  data processing, Excel/PDF/Office/JSON handling, HTTP requests, system
-  inspection) with one of the two preinstalled toolboxes below. They replace
-  PowerShell cmdlets, pipelines, or scripts as well as one-liners in other
-  interpreters, such as the system `python3` in WSL, `node -e`, or `perl`.
-  Use PowerShell only when neither toolbox fits. Invoking the toolboxes and
-  native executables such as `git`, `gh`, or `cargo` directly from the shell
-  is not affected by this rule.
-- "Python" in this section always means the tool venv below, never the system
+- This applies on Windows and in WSL, whatever shell runs the command. Ad-hoc
+  work (file operations beyond the dedicated tools, data processing,
+  Office/PDF/JSON handling, HTTP requests, system inspection) uses one of the
+  two toolboxes below instead of PowerShell, the system `python3` in WSL,
+  `node -e`, or `perl`. Use PowerShell only when neither toolbox fits. Calling
+  the toolboxes or native executables such as `git`, `gh`, or `cargo` directly
+  is not affected.
+- "Python" in this section means the tool venv below, never the system
   `python3` in WSL or a project's own `.venv/`.
-- Write ad-hoc scripts to the temp directory (the session scratchpad when the
-  harness provides one, otherwise `%TEMP%`), run them from there, and delete
-  them as soon as they are no longer needed.
-- Both toolboxes are for tooling only. Real projects keep their own `.venv/` or
+- Write script files to the session scratchpad when the harness provides one,
+  otherwise to `%TEMP%`, and delete them when they are no longer needed. Their
+  data follows "File access across WSL and Windows": WSL scripts keep working
+  files under `/tmp` and touch the Windows side only for inputs and final
+  results.
+- The toolboxes are for tooling only. Real projects keep their own `.venv/` or
   `Cargo.toml`; never add project dependencies to a toolbox.
-- Both are backed up in the repo `<REPO>` (checked out as
-  `~/.rust-tools`; the Python list is copied to `python/requirements.txt`).
-  After changing either toolbox, run `~/.rust-tools/backup.sh "<conventional
-  commit title>"` in WSL. It commits directly to `main`; this backup-only repo
-  needs no issue or pull request. When these instructions change, update
-  `INSTRUCTIONS.md` in the repo as well; shared rules change only in
-  `rules/` (see "Shared rules" at the end).
+- Both toolboxes are backed up in the repo `<REPO>`, checked out as
+  `~/.rust-tools` (the Python package list is copied to
+  `python/requirements.txt`). It also holds `INSTRUCTIONS.md` (this file) and
+  `rules/` (the only copy of the shared rules, see "Shared rules" at the end).
+  After changing a toolbox, these instructions, or `rules/`:
+  1. Mirror changes of these instructions in `INSTRUCTIONS.md`; change shared
+     rules only in `rules/`.
+  2. If the repo is public, make sure no tracked file contains personal names,
+     user paths, or secrets (`git grep -niE '<name>|/Users/[a-z]|/home/[a-z]'`).
+  3. Run `~/.rust-tools/backup.sh "<conventional commit title>"` in WSL. It
+     stages everything, commits, and pushes directly to `main`.
 
 ### Choosing Rust or Python
 
-- Rust is the default for everything, including one-off scripts, quick
-  inspections and one-liners (`rs -e`), and for individual files on the
-  Windows side (read them through `/mnt/c/...` with buffered or whole-file
-  I/O). It compiles in 1–2.5 s, runs faster, and the compiler catches errors
-  before a long run.
-- Rust also replaces Linux shell pipelines and loops (`grep | sed | awk`,
-  `sort | uniq -c`, `find -exec`, `xargs`, `for`/`while` loops, `jq`, `cut`,
-  `wc` chains) whenever the work is more than one simple command or may take
-  longer than about a second: many or large files, counting and aggregating,
-  transforming text or structured data, repeated operations. Simple single
-  commands stay as they are: `ls`, `cat`/`head` of a small file, `mkdir`,
-  `cp`, `mv`, `rm`, `git`, a single `grep` or `find`, and the agent's
-  dedicated search, read and edit tools. When unsure, write `rs -e`.
-  Several independent read-only checks, each a single simple command (for
-  example `ls`, `df`, one `find` or `du`), may share one call. As soon as a
-  loop, a pipe that sorts, counts or filters, or any evaluation of the output
-  comes in, use `tb` or `rs` for that part.
-- For the common cases use the precompiled `tb` first; it starts instantly
-  because nothing is compiled: `tb json` (pretty-print, `-p /json/pointer`,
-  `-k` keys or length; also JSON5, YAML, TOML), `tb conv FILE --to
-  json|yaml|toml|csv`, `tb csv FILE` (columns, types, empty cells,
-  min/max/mean, `-n` first rows), `tb xlsx FILE` (sheet as CSV, `-l` lists
-  sheets), `tb count` (replaces `sort | uniq -c | sort -rn`, `-r` counts the
-  first regex group) and `tb size DIR` (size and file count per entry).
-  `tb <command> --help` shows all options. Searching text stays with `rg`.
+- Rust is the default, including one-off scripts, quick inspections, one-liners
+  (`rs -e`), and single files on the Windows side (read through `/mnt/c/...`
+  with buffered or whole-file I/O). It compiles in 1–2.5 s, runs faster, and
+  the compiler catches errors before a long run.
+- Rust or `tb` also replaces shell pipelines and loops (`grep | sed | awk`,
+  `sort | uniq -c`, `find -exec`, `xargs`, `for`/`while`, `jq`, `cut`, `wc`) as
+  soon as the work involves a loop, a pipe that sorts, counts, or filters, any
+  evaluation of the output, or may take longer than about a second. Simple
+  single commands stay as they are (`ls`, `cat`/`head` of a small file,
+  `mkdir`, `cp`, `mv`, `rm`, `git`, `df`, `du`, one `grep` or `find`), as do the
+  agent's dedicated search, read, and edit tools; several independent ones may
+  share one call. When unsure, use `rs -e`.
+- For common cases use the precompiled `tb` first; it starts instantly:
+  `tb json` (pretty-print, `-p /json/pointer`, `-k` keys or length; also JSON5,
+  YAML, TOML), `tb conv FILE --to json|yaml|toml|csv`, `tb csv FILE` (columns,
+  types, empty cells, min/max/mean, `-n` first rows), `tb xlsx FILE` (sheet as
+  CSV, `-l` lists sheets), `tb count` (replaces `sort | uniq -c | sort -rn`,
+  `-r` counts the first regex group), and `tb size DIR` (size and file count
+  per entry). `tb <command> --help` shows all options. Text search stays with
+  `rg`.
 - Structured data (JSON, CSV, XML, TOML, YAML) is always read with a parser in
-  `tb` or `rs` (serde_json, csv, roxmltree, toml, serde_yaml_ng), never with
-  `grep`/`sed`/`awk` or other regex matching, even for a quick look. Only
-  `head`/`wc` to peek at raw bytes or line counts are fine.
+  `tb` or `rs`, never with `grep`/`sed`/`awk` or other regex matching, even for
+  a quick look. Only `head`/`wc` to peek at raw bytes or line counts are fine.
 - Use Python only where its libraries are clearly better: Word and PowerPoint,
-  PDF of any kind (reading text, tables and form fields as well as creating
-  and editing), editing existing Excel files, mail files (`.msg`, `.eml`), OCR,
-  plots, machine learning and statistics, LLM SDKs, and Windows-specific work
-  (COM, WMI, clipboard, GUI automation), which Rust scripts cannot do because
-  they run in WSL (Linux). Reading Excel files or writing new ones stays with
-  Rust (calamine only reads, rust_xlsxwriter only creates new files). Decide
-  by library quality for the task, not by habit or by how short the script is.
-- Walk or search large directory trees on the Windows side (thousands of
-  files, for example the Desktop or a project with `node_modules`) with
-  Windows-native tools such as `rg`, Git Bash `grep`/`find` or the Python
-  venv, not with Rust in WSL: each file access across the boundary costs
-  about 0.5 ms (see "File access across WSL and Windows").
-- Use one language per task: when part of a small task needs Python, do the
-  whole task in Python instead of splitting it across two scripts. Split only
-  real data pipelines; Polars and Parquet exist on both sides, so data can be
-  handed between a Python and a Rust step as Parquet or CSV files.
+  PDF of any kind (reading, creating, editing, forms), editing existing Excel
+  files, mail files (`.msg`, `.eml`), OCR, plots, machine learning and
+  statistics, LLM SDKs, and Windows-specific work (COM, WMI, clipboard, GUI
+  automation), which Rust cannot do because it runs in WSL. Reading Excel files
+  and writing new ones stays with Rust (calamine reads, rust_xlsxwriter only
+  creates new files). Decide by library quality, not by habit or script length.
+- Walk or search large directory trees on the Windows side (thousands of files)
+  with Windows-native tools (`rg`, Git Bash `grep`/`find`, or the Python venv),
+  not with Rust in WSL, because every file access across the boundary is slow.
+- Use one language per task: when part of a small task needs Python, do all of
+  it in Python. Split only real data pipelines, handing data between a Python
+  and a Rust step as Parquet or CSV files.
 
 ### Rust toolbox (WSL)
 
-- `~/.rust-tools` in WSL (from Windows:
-  `<WSL_HOME_UNC>\.rust-tools`) is a Cargo project whose
-  dependencies are precompiled. The wrapper `rs` (`~/.local/bin/rs`) copies a
-  single-file script into it, builds it with the `script` profile (release,
-  incremental, mold linker) and runs it in the caller's working directory.
+- `~/.rust-tools` in WSL (from Windows: `<WSL_HOME_UNC>\.rust-tools`) is a
+  Cargo project with precompiled dependencies. The wrapper `rs`
+  (`~/.local/bin/rs`) copies a single-file script into it, builds it with the
+  `script` profile (release, incremental, mold linker), and runs it in the
+  caller's working directory.
 - Run in WSL: `rs script.rs [args]`, or `rs -e 'code'` for a snippet that becomes
   the body of `fn main() -> anyhow::Result<()>` (`Context`, `Result`, `bail` are
-  imported). The wrapper appends `Ok(())` after the snippet itself, so do not
-  end the snippet with `Ok(())`; that fails with a type-inference error
-  (E0282). From Windows: `wsl.exe -e <WSL_HOME>/.local/bin/rs <script> [args]`;
-  in Git Bash prefix `MSYS_NO_PATHCONV=1`, otherwise `/home/...` and `/mnt/...`
-  arguments are rewritten to Windows paths. A Windows script path (`C:\...`) is
-  converted, other arguments are passed unchanged, so give the script
-  `/mnt/c/...` paths. `wsl.exe` refuses to start when the Windows working
-  directory path is very long; `cd` to a short directory first. `tb` is called
-  the same way: `wsl.exe -e <WSL_HOME>/.local/bin/tb <command> [args]`.
+  imported). The wrapper appends `Ok(())` itself; ending the snippet with
+  `Ok(())` fails with error E0282.
+- From Windows: `wsl.exe -e <WSL_HOME>/.local/bin/rs <script> [args]`, and the
+  same for `tb`. In Git Bash prefix `MSYS_NO_PATHCONV=1`, otherwise `/home/...`
+  and `/mnt/...` arguments are rewritten to Windows paths. A Windows script path
+  (`C:\...`) is converted, other arguments are passed unchanged, so give the
+  script `/mnt/c/...` paths. `wsl.exe` refuses to start from a very long Windows
+  working directory; `cd` to a short one first.
 - Start time (measured): unchanged script 20–60 ms in WSL (about 0.2 s via
   `wsl.exe`); new or edited script about 1 s, with polars, calamine,
-  rust_xlsxwriter or zip about 2.5–3.5 s. Image scripts take about 1 s when
-  they load and save through `tb::img` (below), but about 14 s with
-  `image::open` or `.save()`. Concurrent `rs` builds wait for each other (one
-  cargo lock), so a parallel session can add waiting time. Only the precompile after changing
-  `Cargo.toml` is slow (polars alone takes several minutes), so never
+  rust_xlsxwriter, or zip about 2.5–3.5 s. Image scripts take about 1 s through
+  `tb::img`, but about 14 s with `image::open` or `.save()`. Concurrent `rs`
+  builds wait for each other (one cargo lock). Only the precompile after
+  changing `Cargo.toml` is slow (polars alone takes several minutes), so never
   interrupt a running `rs` build or `rs --warmup`.
-- A script is a plain `fn main()` file with `use` statements for toolbox crates;
-  it needs no `[dependencies]` header. Prefer `anyhow::Result` and `?`.
-  Compiler messages point to the script's own path; warnings about unused
-  items are switched off.
+- A script is a plain `fn main()` file with `use` statements for toolbox crates
+  and no `[dependencies]` header. Prefer `anyhow::Result` and `?`. Compiler
+  messages point to the script's own path; unused-item warnings are off.
 - Load and save images with the precompiled wrappers in the toolbox library
-  `tb` (`~/.rust-tools/src/lib.rs`): `tb::img::open(path)`, `tb::img::load(&bytes)`,
-  `tb::img::save(&dynamic_image, path)`, `tb::img::save_as(.., ImageFormat)`,
-  `tb::img::encode(&img, ImageFormat) -> Vec<u8>`, and `tb::img::save_rgb`,
-  `save_rgba`, `save_gray` for `RgbImage`/`RgbaImage`/`GrayImage`. Everything
-  else (resize, crop, pixels, imageproc) uses `image`/`imageproc` directly.
-- Do not write a crate API from memory when unsure of it; APIs change between
-  versions (especially polars, image/imageproc, plotters, reqwest, calamine).
-  Look up the exact version in `~/.rust-tools/Cargo.lock`, then read the
-  examples, README and signatures in
-  `~/.cargo/registry/src/index.crates.io-*/<crate>-<version>/` before writing
-  the script.
-- Follow "File access across WSL and Windows" (`rules/`): wrap every `File` in
-  `BufWriter`/`BufReader` or use `fs::write`/`fs::read` once.
+  `tb` (`~/.rust-tools/src/lib.rs`): `tb::img::open(path)`,
+  `tb::img::load(&bytes)`, `tb::img::save(&dynamic_image, path)`,
+  `tb::img::save_as(.., ImageFormat)`, `tb::img::encode(&img, ImageFormat) ->
+  Vec<u8>`, and `tb::img::save_rgb`, `save_rgba`, `save_gray` for
+  `RgbImage`/`RgbaImage`/`GrayImage`. Everything else (resize, crop, pixels,
+  imageproc) uses `image`/`imageproc` directly.
+- Do not write a crate API from memory when unsure of it. Look up the exact
+  version in `~/.rust-tools/Cargo.lock`, then read the examples, README, and
+  signatures in `~/.cargo/registry/src/index.crates.io-*/<crate>-<version>/`.
 - Usable directly (full list with versions in `~/.rust-tools/Cargo.toml`):
   - Errors/CLI/output: anyhow, clap (derive), indicatif, comfy-table,
     owo-colors, humantime, bytesize
@@ -158,11 +145,10 @@ machine's values first:
   - Databases: rusqlite (bundled SQLite)
 - Extend: `cd ~/.rust-tools && cargo add <crate> [--features ...]`, move the new
   line into the matching section of `Cargo.toml`, then run `rs --warmup` once.
-  Prefer pure-Rust crates with minimal features; changing `Cargo.toml` makes each
-  script rebuild once on its next run. Add a wrapper to `src/lib.rs` only for a
-  call whose first build was measured above about 3 s (generic code that each
-  script would compile again); changing `src/lib.rs` relinks every script once.
-  Changes to `src/bin/tb.rs` take effect after `rs --warmup`.
+  Prefer pure-Rust crates with minimal features; changing `Cargo.toml` makes
+  each script rebuild once. Add a wrapper to `src/lib.rs` only for a call whose
+  first build was measured above about 3 s; changing `src/lib.rs` relinks every
+  script once. Changes to `src/bin/tb.rs` take effect after `rs --warmup`.
 - `rs --clean` deletes cached script copies and binaries when `target/` grows.
 
 ### Python tool venv (Windows)
@@ -199,8 +185,8 @@ machine's values first:
 ## Shared rules
 
 The files in `~/.rust-tools/rules/` belong to these instructions and are the
-only copy of them: `running-commands.md` (estimate runtimes, run long commands
-in the background, show progress) and `wsl-windows-files.md` (file access
+only copy of them: `running-commands.md` (efficient scripts, runtime estimates,
+background runs, progress reports) and `wsl-windows-files.md` (file access
 across WSL and Windows). Load them instead of copying them, so a change there
 reaches every agent:
 
