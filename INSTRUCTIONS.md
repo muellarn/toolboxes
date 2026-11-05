@@ -64,8 +64,9 @@ machine's values first:
   YAML, TOML), `tb conv FILE --to json|yaml|toml|csv`, `tb csv FILE` (columns,
   types, empty cells, min/max/mean, `-n` first rows), `tb xlsx FILE` (sheet as
   CSV, `-l` lists sheets), `tb count` (replaces `sort | uniq -c | sort -rn`,
-  `-r` counts the first regex group), and `tb size DIR` (size and file count
-  per entry). `tb <command> --help` shows all options. Text search stays with
+  `-r` counts the first regex group), `tb size DIR` (size and file count per
+  entry), and `tb watch LOG` (events of a background run for a monitor; see
+  "Running commands"). `tb <command> --help` shows all options. Text search stays with
   `rg`.
 - Structured data (JSON, CSV, XML, TOML, YAML) is always read with a parser in
   `tb` or `rs`, never with `grep`/`sed`/`awk` or other regex matching, even for

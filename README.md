@@ -12,7 +12,7 @@ libraries are clearly better.
 | `Cargo.toml`, `Cargo.lock` | Rust toolbox: about 75 precompiled crates |
 | `rs` | Wrapper that runs single-file Rust scripts against the toolbox |
 | `src/lib.rs` | Library `tb`: precompiled wrappers for slow-to-compile calls (`tb::img`) |
-| `src/bin/tb.rs` | Precompiled `tb` tool: JSON/YAML/TOML/CSV/Excel inspection and conversion, counting, directory sizes |
+| `src/bin/tb.rs` | Precompiled `tb` tool: JSON/YAML/TOML/CSV/Excel inspection and conversion, counting, directory sizes, watching the log of a background run |
 | `.cargo/config.toml` | mold linker for faster builds |
 | `python/requirements.txt` | Package list of the Python tool venv on Windows |
 | `backup.sh` | Copies the Python list here, commits and pushes |

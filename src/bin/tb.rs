@@ -1,12 +1,13 @@
 //! tb - precompiled helpers for jobs that would otherwise need a shell pipeline or a new
 //! `rs` script: inspect JSON, convert data formats, summarize CSV, dump Excel sheets,
-//! count lines and sum up directory sizes. Built once by `rs --warmup`, so it starts
+//! count lines, sum up directory sizes and watch the log of a background run. Built once by `rs --warmup`, so it starts
 //! instantly. Searching text stays with `rg`.
 use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand, ValueEnum};
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 #[derive(Parser)]
 #[command(name = "tb", about = "Precompiled data helpers of the Rust toolbox")]
@@ -78,6 +79,24 @@ enum Cmd {
         #[arg(short = 'n', long)]
         top: Option<usize>,
     },
+    /// Watch the log of a background run and print one line per event: a status every
+    /// `--every`, alert lines, a stall warning and the end of the run (`__EXIT <code>`).
+    /// Meant as the event source of an agent's monitor; `__START <unix secs>` sets the start.
+    Watch {
+        log: PathBuf,
+        /// Interval between status lines
+        #[arg(short, long, default_value = "30s", value_parser = humantime::parse_duration)]
+        every: Duration,
+        /// Warn once when the log has not grown for this long
+        #[arg(short, long, default_value = "2m", value_parser = humantime::parse_duration)]
+        stall: Duration,
+        /// Stop watching after this long; re-arm to continue
+        #[arg(short = 'f', long = "for", default_value = "29m", value_parser = humantime::parse_duration)]
+        max: Duration,
+        /// Case-insensitive regex for alert lines
+        #[arg(short, long, default_value = "error|panic|traceback|fatal|killed|out of memory|failed")]
+        alert: String,
+    },
 }
 
 #[derive(Clone, Copy, ValueEnum)]
@@ -96,6 +115,7 @@ fn main() -> Result<()> {
         Cmd::Xlsx { file, sheet, list } => xlsx(&file, sheet, list),
         Cmd::Count { file, regex, top } => count(file, regex, top),
         Cmd::Size { dir, top } => size(&dir, top),
+        Cmd::Watch { log, every, stall, max, alert } => watch(&log, every, stall, max, &alert),
     }
 }
 
@@ -303,4 +323,84 @@ fn size(dir: &Path, top: Option<usize>) -> Result<()> {
     }
     println!("{:>10}  {total_files:>8} files  total", bytesize::ByteSize(total).to_string());
     Ok(())
+}
+
+/// Poll a growing log once per second; print status, alert, stall and end events.
+fn watch(log: &Path, every: Duration, stall: Duration, max: Duration, alert: &str) -> Result<()> {
+    use std::io::{Seek, SeekFrom};
+    let alert = regex::RegexBuilder::new(alert).case_insensitive(true).build()?;
+    let secs = |d: Duration| humantime::format_duration(Duration::from_secs(d.as_secs())).to_string();
+    let unix_now = || SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs());
+    let watch_start = unix_now();
+    let since = |start: Option<u64>| secs(Duration::from_secs(unix_now().saturating_sub(start.unwrap_or(watch_start))));
+    let short = |s: &str| {
+        let mut t: String = s.chars().take(160).collect();
+        if t.len() < s.len() { t.push('…'); }
+        t
+    };
+    // The unfinished last line (e.g. a prompt) is more current than the last complete one.
+    let last = |tail: &[u8], last_line: &str| {
+        let t = String::from_utf8_lossy(tail);
+        short(if t.trim().is_empty() { last_line } else { t.trim() })
+    };
+    let t0 = Instant::now();
+    let (mut pos, mut tail) = (0u64, Vec::new());
+    let (mut started, mut last_line) = (None::<u64>, String::from("(log not found)"));
+    let (mut new_lines, mut alerts, mut first_read) = (0usize, 0usize, true);
+    let (mut last_growth, mut next_status, mut quiet_until, mut stalled) = (t0, t0 + every, t0, false);
+    loop {
+        let now = Instant::now();
+        if let Ok(mut f) = std::fs::File::open(log) {
+            let len = f.metadata()?.len();
+            if len < pos { pos = 0; tail.clear(); } // truncated or replaced
+            if len > pos {
+                f.seek(SeekFrom::Start(pos))?;
+                (&mut f).take(len - pos).read_to_end(&mut tail)?;
+                pos = len;
+                last_growth = now;
+                stalled = false;
+                // Only complete lines; `\r` ends a progress-bar update.
+                let cut = tail.iter().rposition(|&b| b == b'\n' || b == b'\r').map_or(0, |i| i + 1);
+                let done: Vec<u8> = tail.drain(..cut).collect();
+                for line in String::from_utf8_lossy(&done).split(['\n', '\r']) {
+                    let line = line.trim_end();
+                    if line.is_empty() { continue; }
+                    if let Some(t) = line.strip_prefix("__START ") { started = t.trim().parse().ok(); continue; }
+                    if let Some(code) = line.strip_prefix("__EXIT ") {
+                        println!("END exit={} after {}, {alerts} alert lines | last: {}",
+                            code.trim(), since(started), short(&last_line));
+                        return Ok(());
+                    }
+                    new_lines += 1;
+                    if alert.is_match(line) {
+                        alerts += 1;
+                        // Lines already in the log when the watch starts are only counted
+                        // (a re-armed watch must not repeat them); then one alert per interval.
+                        if !first_read && now >= quiet_until {
+                            println!("ALERT {}: {}", since(started), short(line));
+                            quiet_until = now + every;
+                        }
+                    }
+                    last_line = line.to_string();
+                }
+            }
+        }
+        first_read = false;
+        let quiet = now.duration_since(last_growth);
+        if !stalled && quiet >= stall {
+            println!("STALL {}: no output for {} | last: {}", since(started), secs(quiet), last(&tail, &last_line));
+            stalled = true;
+        }
+        if now >= next_status {
+            println!("STATUS {}: +{new_lines} lines, {} total, {alerts} alert lines, quiet {} | last: {}",
+                since(started), bytesize::ByteSize(pos), secs(quiet), last(&tail, &last_line));
+            new_lines = 0;
+            next_status = now + every;
+        }
+        if now.duration_since(t0) >= max {
+            println!("EXPIRED after watching {}: run still going, re-arm | last: {}", secs(max), last(&tail, &last_line));
+            return Ok(());
+        }
+        std::thread::sleep(Duration::from_secs(1));
+    }
 }
