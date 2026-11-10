@@ -93,9 +93,11 @@ enum Cmd {
         /// Stop watching after this long; re-arm to continue
         #[arg(short = 'f', long = "for", default_value = "29m", value_parser = humantime::parse_duration)]
         max: Duration,
-        /// Case-insensitive regex for alert lines
-        #[arg(short, long, default_value = "error|panic|traceback|fatal|killed|out of memory|failed")]
-        alert: String,
+        /// Case-insensitive regex for alert lines. Default: `error:`/`error[`, panic, traceback,
+        /// fatal, killed, out of memory, failed; cargo progress lines (Compiling, Checking, ...)
+        /// are skipped so crate names such as `thiserror` do not alert. A custom regex sees every line.
+        #[arg(short, long)]
+        alert: Option<String>,
     },
 }
 
@@ -115,7 +117,7 @@ fn main() -> Result<()> {
         Cmd::Xlsx { file, sheet, list } => xlsx(&file, sheet, list),
         Cmd::Count { file, regex, top } => count(file, regex, top),
         Cmd::Size { dir, top } => size(&dir, top),
-        Cmd::Watch { log, every, stall, max, alert } => watch(&log, every, stall, max, &alert),
+        Cmd::Watch { log, every, stall, max, alert } => watch(&log, every, stall, max, alert.as_deref()),
     }
 }
 
@@ -326,9 +328,14 @@ fn size(dir: &Path, top: Option<usize>) -> Result<()> {
 }
 
 /// Poll a growing log once per second; print status, alert, stall and end events.
-fn watch(log: &Path, every: Duration, stall: Duration, max: Duration, alert: &str) -> Result<()> {
+fn watch(log: &Path, every: Duration, stall: Duration, max: Duration, alert: Option<&str>) -> Result<()> {
     use std::io::{Seek, SeekFrom};
-    let alert = regex::RegexBuilder::new(alert).case_insensitive(true).build()?;
+    // The default alert skips cargo progress lines, whose crate names often contain "error".
+    let progress = regex::Regex::new(r"^\s*(Compiling|Checking|Downloaded|Downloading|Fresh|Building|Running|Finished|Documenting)\b")?;
+    let skip_progress = alert.is_none();
+    let alert = regex::RegexBuilder::new(alert.unwrap_or(r"\berror\b\s*[:\[]|panic|traceback|fatal|killed|out of memory|failed"))
+        .case_insensitive(true)
+        .build()?;
     let secs = |d: Duration| humantime::format_duration(Duration::from_secs(d.as_secs())).to_string();
     let unix_now = || SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs());
     let watch_start = unix_now();
@@ -372,7 +379,7 @@ fn watch(log: &Path, every: Duration, stall: Duration, max: Duration, alert: &st
                         return Ok(());
                     }
                     new_lines += 1;
-                    if alert.is_match(line) {
+                    if alert.is_match(line) && !(skip_progress && progress.is_match(line)) {
                         alerts += 1;
                         // Lines already in the log when the watch starts are only counted
                         // (a re-armed watch must not repeat them); then one alert per interval.
